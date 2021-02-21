@@ -1,7 +1,9 @@
 {
-  "compilerOptions": {
-    "plugins": [{
-      "name": "plugin-a"
-    }]
-  }
+	"compilerOptions": {
+		"plugins": [
+			{
+				"name": "plugin-a"
+			}
+		]
+	}
 }

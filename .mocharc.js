@@ -1,3 +1,3 @@
 module.exports = {
-  spec: ['dist/**/*.spec.js']
+	spec: ['dist/**/*.spec.js'],
 };

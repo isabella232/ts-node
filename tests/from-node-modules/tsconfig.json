@@ -1,8 +1,8 @@
 {
-  "ts-node": {
-    "ignore": []
-  },
-  "compilerOptions": {
-    "allowJs": true
-  }
+	"ts-node": {
+		"ignore": []
+	},
+	"compilerOptions": {
+		"allowJs": true
+	}
 }

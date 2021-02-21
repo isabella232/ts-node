@@ -23,46 +23,44 @@
  * in the TypeStrong org.
  */
 
-import {} from 'ts-expose-internals'
-import * as ts from 'typescript'
-import { getSchemastoreSchema } from './create-merged-schema'
+import {} from 'ts-expose-internals';
+import * as ts from 'typescript';
+import { getSchemastoreSchema } from './create-merged-schema';
 
 // Sometimes schemastore becomes out of date with the latest tsconfig options.
 // This script
 
 async function main() {
-  const schemastoreSchema = await getSchemastoreSchema();
-  const compilerOptions = schemastoreSchema.definitions.compilerOptionsDefinition.properties.compilerOptions.properties;
+	const schemastoreSchema = await getSchemastoreSchema();
+	const compilerOptions = schemastoreSchema.definitions.compilerOptionsDefinition.properties.compilerOptions.properties;
 
-  // These options are only available via CLI flags, not in a tsconfig file.
-  const excludedOptions = [
-    'help',
-    'all',
-    'version',
-    'init',
-    'project',
-    'build',
-    'showConfig',
-    'generateCpuProfile', // <- technically gets parsed, but doesn't seem to do anything?
-    'locale',
-    'out', // <-- deprecated
-  ];
+	// These options are only available via CLI flags, not in a tsconfig file.
+	const excludedOptions = [
+		'help',
+		'all',
+		'version',
+		'init',
+		'project',
+		'build',
+		'showConfig',
+		'generateCpuProfile', // <- technically gets parsed, but doesn't seem to do anything?
+		'locale',
+		'out', // <-- deprecated
+	];
 
-  ts.optionDeclarations.forEach(v => {
-    if(excludedOptions.includes(v.name)) return;
+	ts.optionDeclarations.forEach((v) => {
+		if (excludedOptions.includes(v.name)) return;
 
-    if(!compilerOptions[v.name]) {
-      compilerOptions[v.name] = {
-        description: v.description?.message,
-        type: v.type,
-      };
-    }
-  });
+		if (!compilerOptions[v.name]) {
+			compilerOptions[v.name] = {
+				description: v.description?.message,
+				type: v.type,
+			};
+		}
+	});
 
-  // Don't write to a file; this is not part of our build process
-  console.log(
-    JSON.stringify(schemastoreSchema, null, 2)
-  );
+	// Don't write to a file; this is not part of our build process
+	console.log(JSON.stringify(schemastoreSchema, null, 2));
 }
 
 main();

@@ -1,7 +1,7 @@
 {
-  "compilerOptions": {
-    "module": "ESNext",
-    "allowJs": true,
-    "jsx": "react"
-  }
+	"compilerOptions": {
+		"module": "ESNext",
+		"allowJs": true,
+		"jsx": "react"
+	}
 }

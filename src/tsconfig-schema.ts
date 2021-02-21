@@ -1,4 +1,4 @@
-import { TsConfigOptions } from '.'
+import { TsConfigOptions } from '.';
 
 /*
  * This interface exists solely for generating a JSON schema for tsconfig.json.
@@ -11,10 +11,10 @@ import { TsConfigOptions } from '.'
  * @allOf [{"$ref": "https://schemastore.azurewebsites.net/schemas/json/tsconfig.json"}]
  */
 export interface TsConfigSchema {
-  /**
-   * ts-node options.  See also: https://github.com/TypeStrong/ts-node#configuration-options
-   *
-   * ts-node offers TypeScript execution and REPL for node.js, with source map support.
-   */
-  'ts-node': TsConfigOptions
+	/**
+	 * ts-node options.  See also: https://github.com/TypeStrong/ts-node#configuration-options
+	 *
+	 * ts-node offers TypeScript execution and REPL for node.js, with source map support.
+	 */
+	'ts-node': TsConfigOptions;
 }

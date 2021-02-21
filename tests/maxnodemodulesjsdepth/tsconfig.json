@@ -1,7 +1,7 @@
 {
-  "compilerOptions": {
-    "allowJs": true,
-    "maxNodeModuleJsDepth": 1,
-    "moduleResolution": "node"
-  }
+	"compilerOptions": {
+		"allowJs": true,
+		"maxNodeModuleJsDepth": 1,
+		"moduleResolution": "node"
+	}
 }
