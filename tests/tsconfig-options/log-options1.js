@@ -5,5 +5,5 @@ console.log(
 	JSON.stringify({
 		options: register.options,
 		config: register.config,
-	}),
+	})
 );

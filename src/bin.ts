@@ -10,7 +10,10 @@ import { VERSION, TSError, parse, register, createRequire } from './index';
 /**
  * Main `bin` functionality.
  */
-export function main(argv: string[] = process.argv.slice(2), entrypointArgs: Record<string, any> = {}) {
+export function main(
+	argv: string[] = process.argv.slice(2),
+	entrypointArgs: Record<string, any> = {}
+) {
 	const args = {
 		...entrypointArgs,
 		...arg(
@@ -65,7 +68,7 @@ export function main(argv: string[] = process.argv.slice(2), entrypointArgs: Rec
 			{
 				argv,
 				stopAtPositional: true,
-			},
+			}
 		),
 	};
 
@@ -168,7 +171,8 @@ export function main(argv: string[] = process.argv.slice(2), entrypointArgs: Rec
 		compilerOptions,
 		require: argsRequire,
 		readFile: code !== undefined ? evalAwarePartialHost.readFile : undefined,
-		fileExists: code !== undefined ? evalAwarePartialHost.fileExists : undefined,
+		fileExists:
+			code !== undefined ? evalAwarePartialHost.fileExists : undefined,
 	});
 
 	// Bind REPL service to ts-node compiler service (chicken-and-egg problem)
@@ -188,8 +192,13 @@ export function main(argv: string[] = process.argv.slice(2), entrypointArgs: Rec
 	module.paths = (Module as any)._nodeModulePaths(cwd);
 
 	// Prepend `ts-node` arguments to CLI for child processes.
-	process.execArgv.unshift(__filename, ...process.argv.slice(2, process.argv.length - args._.length));
-	process.argv = [process.argv[1]].concat(scriptPath || []).concat(args._.slice(1));
+	process.execArgv.unshift(
+		__filename,
+		...process.argv.slice(2, process.argv.length - args._.length)
+	);
+	process.argv = [process.argv[1]]
+		.concat(scriptPath || [])
+		.concat(args._.slice(1));
 
 	// Execute the main contents (either eval, script or piped).
 	if (code !== undefined && !interactive) {
@@ -205,7 +214,9 @@ export function main(argv: string[] = process.argv.slice(2), entrypointArgs: Rec
 			} else {
 				let buffer = code || '';
 				process.stdin.on('data', (chunk: Buffer) => (buffer += chunk));
-				process.stdin.on('end', () => evalAndExit(replService, module, buffer, print));
+				process.stdin.on('end', () =>
+					evalAndExit(replService, module, buffer, print)
+				);
 			}
 		}
 	}
@@ -214,15 +225,23 @@ export function main(argv: string[] = process.argv.slice(2), entrypointArgs: Rec
 /**
  * Get project search path from args.
  */
-function getProjectSearchDir(cwd?: string, scriptMode?: boolean, cwdMode?: boolean, scriptPath?: string) {
+function getProjectSearchDir(
+	cwd?: string,
+	scriptMode?: boolean,
+	cwdMode?: boolean,
+	scriptPath?: string
+) {
 	// Validate `--script-mode` / `--cwd-mode` / `--cwd` usage is correct.
 	if (scriptMode && cwdMode) {
 		throw new TypeError('--cwd-mode cannot be combined with --script-mode');
 	}
 	if (scriptMode && !scriptPath) {
-		throw new TypeError('--script-mode must be used with a script name, e.g. `ts-node --script-mode <script.ts>`');
+		throw new TypeError(
+			'--script-mode must be used with a script name, e.g. `ts-node --script-mode <script.ts>`'
+		);
 	}
-	const doScriptMode = scriptMode === true ? true : cwdMode === true ? false : !!scriptPath;
+	const doScriptMode =
+		scriptMode === true ? true : cwdMode === true ? false : !!scriptPath;
 	if (doScriptMode) {
 		// Use node's own resolution behavior to ensure we follow symlinks.
 		// scriptPath may omit file extension or point to a directory with or without package.json.
@@ -267,13 +286,16 @@ function requireResolveNonCached(absoluteModuleSpecifier: string) {
 	// On those node versions, pollute the require cache instead.  This is a deliberate
 	// ts-node limitation that will *rarely* manifest, and will not matter once node 10
 	// is end-of-life'd on 2021-04-30
-	const isSupportedNodeVersion = parseInt(process.versions.node.split('.')[0], 10) >= 12;
+	const isSupportedNodeVersion =
+		parseInt(process.versions.node.split('.')[0], 10) >= 12;
 	if (!isSupportedNodeVersion) return require.resolve(absoluteModuleSpecifier);
 
 	const { dir, base } = parsePath(absoluteModuleSpecifier);
 	const relativeModuleSpecifier = `./${base}`;
 
-	const req = createRequire(join(dir, 'imaginaryUncacheableRequireResolveScript'));
+	const req = createRequire(
+		join(dir, 'imaginaryUncacheableRequireResolveScript')
+	);
 	return req.resolve(relativeModuleSpecifier, {
 		paths: [
 			`${guaranteedNonexistentDirectoryPrefix}${guaranteedNonexistentDirectorySuffix++}`,
@@ -285,7 +307,12 @@ function requireResolveNonCached(absoluteModuleSpecifier: string) {
 /**
  * Evaluate a script.
  */
-function evalAndExit(replService: ReplService, module: Module, code: string, isPrinted: boolean) {
+function evalAndExit(
+	replService: ReplService,
+	module: Module,
+	code: string,
+	isPrinted: boolean
+) {
 	let result: any;
 	(global as any).__filename = module.filename;
 	(global as any).__dirname = dirname(module.filename);

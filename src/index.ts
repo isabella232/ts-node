@@ -5,11 +5,17 @@ import { BaseError } from 'make-error';
 import * as util from 'util';
 import { fileURLToPath } from 'url';
 import type * as _ts from 'typescript';
-import { Module, createRequire as nodeCreateRequire, createRequireFromPath as nodeCreateRequireFromPath } from 'module';
+import {
+	Module,
+	createRequire as nodeCreateRequire,
+	createRequireFromPath as nodeCreateRequireFromPath,
+} from 'module';
 import type _createRequire from 'create-require';
 // tslint:disable-next-line:deprecation
 export const createRequire =
-	nodeCreateRequire ?? nodeCreateRequireFromPath ?? (require('create-require') as typeof _createRequire);
+	nodeCreateRequire ??
+	nodeCreateRequireFromPath ??
+	(require('create-require') as typeof _createRequire);
 
 export { createRepl, CreateReplOptions, ReplService } from './repl';
 
@@ -17,7 +23,8 @@ export { createRepl, CreateReplOptions, ReplService } from './repl';
  * Does this version of node obey the package.json "type" field
  * and throw ERR_REQUIRE_ESM when attempting to require() an ESM modules.
  */
-const engineSupportsPackageTypeField = parseInt(process.versions.node.split('.')[0], 10) >= 12;
+const engineSupportsPackageTypeField =
+	parseInt(process.versions.node.split('.')[0], 10) >= 12;
 
 // Loaded conditionally so we don't need to support older node versions
 let assertScriptCanLoadAsCJSImpl: ((filename: string) => void) | undefined;
@@ -29,7 +36,8 @@ let assertScriptCanLoadAsCJSImpl: ((filename: string) => void) | undefined;
 function assertScriptCanLoadAsCJS(filename: string) {
 	if (!engineSupportsPackageTypeField) return;
 	if (!assertScriptCanLoadAsCJSImpl)
-		assertScriptCanLoadAsCJSImpl = require('../dist-raw/node-cjs-loader-utils').assertScriptCanLoadAsCJSImpl;
+		assertScriptCanLoadAsCJSImpl = require('../dist-raw/node-cjs-loader-utils')
+			.assertScriptCanLoadAsCJSImpl;
 	assertScriptCanLoadAsCJSImpl!(filename);
 }
 
@@ -102,7 +110,8 @@ function yn(value: string | undefined) {
 const shouldDebug = yn(env.TS_NODE_DEBUG);
 /** @internal */
 export const debug = shouldDebug
-	? (...args: any) => console.log(`[ts-node ${new Date().toISOString()}]`, ...args)
+	? (...args: any) =>
+			console.log(`[ts-node ${new Date().toISOString()}]`, ...args)
 	: () => undefined;
 const debugFn = shouldDebug
 	? <T, U>(key: string, fn: (arg: T) => U) => {
@@ -141,7 +150,9 @@ export interface TSCommon {
  */
 interface TSInternal {
 	// https://github.com/microsoft/TypeScript/blob/4a34294908bed6701dcba2456ca7ac5eafe0ddff/src/compiler/core.ts#L1906-L1909
-	createGetCanonicalFileName(useCaseSensitiveFileNames: boolean): TSInternal.GetCanonicalFileName;
+	createGetCanonicalFileName(
+		useCaseSensitiveFileNames: boolean
+	): TSInternal.GetCanonicalFileName;
 }
 namespace TSInternal {
 	// https://github.com/microsoft/TypeScript/blob/4a34294908bed6701dcba2456ca7ac5eafe0ddff/src/compiler/core.ts#L1906
@@ -283,7 +294,9 @@ export interface CreateOptions {
 	require?: Array<string>;
 	readFile?: (path: string) => string | undefined;
 	fileExists?: (path: string) => boolean;
-	transformers?: _ts.CustomTransformers | ((p: _ts.Program) => _ts.CustomTransformers);
+	transformers?:
+		| _ts.CustomTransformers
+		| ((p: _ts.Program) => _ts.CustomTransformers);
 	/**
 	 * True if require() hooks should interop with experimental ESM loader.
 	 * Enabled explicitly via a flag since it is a breaking change.
@@ -485,7 +498,12 @@ export function register(opts: RegisterOptions = {}): Service {
 	process[REGISTER_INSTANCE] = service;
 
 	// Register the extensions.
-	registerExtensions(service.options.preferTsExts, extensions, service, originalJsHandler);
+	registerExtensions(
+		service.options.preferTsExts,
+		extensions,
+		service,
+		originalJsHandler
+	);
 
 	// Require specified modules before start-up.
 	(Module as any)._preloadModules(service.options.require);
@@ -497,7 +515,9 @@ export function register(opts: RegisterOptions = {}): Service {
  * Create TypeScript compiler instance.
  */
 export function create(rawOptions: CreateOptions = {}): Service {
-	const cwd = resolve(rawOptions.cwd ?? rawOptions.dir ?? DEFAULTS.cwd ?? process.cwd()); // tslint:disable-line:deprecation
+	const cwd = resolve(
+		rawOptions.cwd ?? rawOptions.dir ?? DEFAULTS.cwd ?? process.cwd()
+	); // tslint:disable-line:deprecation
 	const compilerName = rawOptions.compiler ?? DEFAULTS.compiler;
 
 	/**
@@ -505,18 +525,35 @@ export function create(rawOptions: CreateOptions = {}): Service {
 	 * be changed by the tsconfig, so we have to do this twice.
 	 */
 	function loadCompiler(name: string | undefined, relativeToPath: string) {
-		const compiler = require.resolve(name || 'typescript', { paths: [relativeToPath, __dirname] });
+		const compiler = require.resolve(name || 'typescript', {
+			paths: [relativeToPath, __dirname],
+		});
 		const ts: typeof _ts = require(compiler);
 		return { compiler, ts };
 	}
 
 	// Compute minimum options to read the config file.
-	let { compiler, ts } = loadCompiler(compilerName, rawOptions.projectSearchDir ?? rawOptions.project ?? cwd);
+	let { compiler, ts } = loadCompiler(
+		compilerName,
+		rawOptions.projectSearchDir ?? rawOptions.project ?? cwd
+	);
 
 	// Read config file and merge new options between env and CLI options.
-	const { configFilePath, config, options: tsconfigOptions } = readConfig(cwd, ts, rawOptions);
-	const options = assign<RegisterOptions>({}, DEFAULTS, tsconfigOptions || {}, rawOptions);
-	options.require = [...(tsconfigOptions.require || []), ...(rawOptions.require || [])];
+	const { configFilePath, config, options: tsconfigOptions } = readConfig(
+		cwd,
+		ts,
+		rawOptions
+	);
+	const options = assign<RegisterOptions>(
+		{},
+		DEFAULTS,
+		tsconfigOptions || {},
+		rawOptions
+	);
+	options.require = [
+		...(tsconfigOptions.require || []),
+		...(rawOptions.require || []),
+	];
 
 	// Re-load the compiler in case it has changed.
 	// Compiler is loaded relative to tsconfig.json, so tsconfig discovery may cause us to load a
@@ -528,7 +565,8 @@ export function create(rawOptions: CreateOptions = {}): Service {
 	const readFile = options.readFile || ts.sys.readFile;
 	const fileExists = options.fileExists || ts.sys.fileExists;
 	// typeCheck can override transpileOnly, useful for CLI flag to override config file
-	const transpileOnly = options.transpileOnly === true && options.typeCheck !== true;
+	const transpileOnly =
+		options.transpileOnly === true && options.typeCheck !== true;
 	const transformers = options.transformers || undefined;
 	const ignoreDiagnostics = [
 		6059, // "'rootDir' is expected to contain all source files."
@@ -537,7 +575,10 @@ export function create(rawOptions: CreateOptions = {}): Service {
 		...(options.ignoreDiagnostics || []),
 	].map(Number);
 
-	const configDiagnosticList = filterDiagnostics(config.errors, ignoreDiagnostics);
+	const configDiagnosticList = filterDiagnostics(
+		config.errors,
+		ignoreDiagnostics
+	);
 	const outputCache = new Map<
 		string,
 		{
@@ -546,18 +587,27 @@ export function create(rawOptions: CreateOptions = {}): Service {
 	>();
 
 	const configFileDirname = configFilePath ? dirname(configFilePath) : null;
-	const scopeDir = options.scopeDir ?? config.options.rootDir ?? configFileDirname ?? cwd;
+	const scopeDir =
+		options.scopeDir ?? config.options.rootDir ?? configFileDirname ?? cwd;
 	const ignoreBaseDir = configFileDirname ?? cwd;
-	const isScoped = options.scope ? (fileName: string) => relative(scopeDir, fileName).charAt(0) !== '.' : () => true;
+	const isScoped = options.scope
+		? (fileName: string) => relative(scopeDir, fileName).charAt(0) !== '.'
+		: () => true;
 	const shouldIgnore = createIgnore(
 		ignoreBaseDir,
-		options.skipIgnore ? [] : (options.ignore || ['(?:^|/)node_modules/']).map((str) => new RegExp(str)),
+		options.skipIgnore
+			? []
+			: (options.ignore || ['(?:^|/)node_modules/']).map(
+					(str) => new RegExp(str)
+			  )
 	);
 
 	const diagnosticHost: _ts.FormatDiagnosticsHost = {
 		getNewLine: () => ts.sys.newLine,
 		getCurrentDirectory: () => cwd,
-		getCanonicalFileName: ts.sys.useCaseSensitiveFileNames ? (x) => x : (x) => x.toLowerCase(),
+		getCanonicalFileName: ts.sys.useCaseSensitiveFileNames
+			? (x) => x
+			: (x) => x.toLowerCase(),
 	};
 
 	// Install source map support and read from memory cache.
@@ -617,15 +667,23 @@ export function create(rawOptions: CreateOptions = {}): Service {
 	 * Create the basic required function using transpile mode.
 	 */
 	let getOutput: (code: string, fileName: string) => SourceOutput;
-	let getTypeInfo: (_code: string, _fileName: string, _position: number) => TypeInfo;
+	let getTypeInfo: (
+		_code: string,
+		_fileName: string,
+		_position: number
+	) => TypeInfo;
 
 	const getCanonicalFileName = ((ts as unknown) as TSInternal).createGetCanonicalFileName(
-		ts.sys.useCaseSensitiveFileNames,
+		ts.sys.useCaseSensitiveFileNames
 	);
 
 	// In a factory because these are shared across both CompilerHost and LanguageService codepaths
 	function createResolverFunctions(serviceHost: _ts.ModuleResolutionHost) {
-		const moduleResolutionCache = ts.createModuleResolutionCache(cwd, getCanonicalFileName, config.options);
+		const moduleResolutionCache = ts.createModuleResolutionCache(
+			cwd,
+			getCanonicalFileName,
+			config.options
+		);
 		const knownInternalFilenames = new Set<string>();
 		/** "Buckets" (module directories) whose contents should be marked "internal" */
 		const internalBuckets = new Set<string>();
@@ -656,14 +714,17 @@ export function create(rawOptions: CreateOptions = {}): Service {
 		/**
 		 * If we need to emit JS for a file, force TS to consider it non-external
 		 */
-		const fixupResolvedModule = (resolvedModule: _ts.ResolvedModule | _ts.ResolvedTypeReferenceDirective) => {
+		const fixupResolvedModule = (
+			resolvedModule: _ts.ResolvedModule | _ts.ResolvedTypeReferenceDirective
+		) => {
 			const { resolvedFileName } = resolvedModule;
 			if (resolvedFileName === undefined) return;
 			// .ts is always switched to internal
 			// .js is switched on-demand
 			if (
 				resolvedModule.isExternalLibraryImport &&
-				((resolvedFileName.endsWith('.ts') && !resolvedFileName.endsWith('.d.ts')) ||
+				((resolvedFileName.endsWith('.ts') &&
+					!resolvedFileName.endsWith('.d.ts')) ||
 					isFileKnownToBeInternal(resolvedFileName) ||
 					isFileInInternalBucket(resolvedFileName))
 			) {
@@ -683,7 +744,7 @@ export function create(rawOptions: CreateOptions = {}): Service {
 			containingFile: string,
 			reusedNames: string[] | undefined,
 			redirectedReference: _ts.ResolvedProjectReference | undefined,
-			optionsOnlyWithNewerTsVersions: _ts.CompilerOptions,
+			optionsOnlyWithNewerTsVersions: _ts.CompilerOptions
 		): (_ts.ResolvedModule | undefined)[] => {
 			return moduleNames.map((moduleName) => {
 				const { resolvedModule } = ts.resolveModuleName(
@@ -692,7 +753,7 @@ export function create(rawOptions: CreateOptions = {}): Service {
 					config.options,
 					serviceHost,
 					moduleResolutionCache,
-					redirectedReference,
+					redirectedReference
 				);
 				if (resolvedModule) {
 					fixupResolvedModule(resolvedModule);
@@ -704,9 +765,13 @@ export function create(rawOptions: CreateOptions = {}): Service {
 		// language service never calls this, but TS docs recommend that we implement it
 		const getResolvedModuleWithFailedLookupLocationsFromCache: _ts.LanguageServiceHost['getResolvedModuleWithFailedLookupLocationsFromCache'] = (
 			moduleName,
-			containingFile,
+			containingFile
 		): _ts.ResolvedModuleWithFailedLookupLocations | undefined => {
-			const ret = ts.resolveModuleNameFromCache(moduleName, containingFile, moduleResolutionCache);
+			const ret = ts.resolveModuleNameFromCache(
+				moduleName,
+				containingFile,
+				moduleResolutionCache
+			);
 			if (ret && ret.resolvedModule) {
 				fixupResolvedModule(ret.resolvedModule);
 			}
@@ -717,16 +782,18 @@ export function create(rawOptions: CreateOptions = {}): Service {
 			typeDirectiveNames: string[],
 			containingFile: string,
 			redirectedReference: _ts.ResolvedProjectReference | undefined,
-			options: _ts.CompilerOptions,
+			options: _ts.CompilerOptions
 		): (_ts.ResolvedTypeReferenceDirective | undefined)[] => {
 			// Note: seems to be called with empty typeDirectiveNames array for all files.
 			return typeDirectiveNames.map((typeDirectiveName) => {
-				const { resolvedTypeReferenceDirective } = ts.resolveTypeReferenceDirective(
+				const {
+					resolvedTypeReferenceDirective,
+				} = ts.resolveTypeReferenceDirective(
 					typeDirectiveName,
 					containingFile,
 					config.options,
 					serviceHost,
-					redirectedReference,
+					redirectedReference
 				);
 				if (resolvedTypeReferenceDirective) {
 					fixupResolvedModule(resolvedTypeReferenceDirective);
@@ -753,7 +820,9 @@ export function create(rawOptions: CreateOptions = {}): Service {
 		// Use language services by default (TODO: invert next major version).
 		if (!options.compilerHost) {
 			let projectVersion = 1;
-			const fileVersions = new Map(Array.from(rootFileNames).map((fileName) => [fileName, 0]));
+			const fileVersions = new Map(
+				Array.from(rootFileNames).map((fileName) => [fileName, 0])
+			);
 
 			const getCustomTransformers = () => {
 				if (typeof transformers === 'function') {
@@ -791,10 +860,16 @@ export function create(rawOptions: CreateOptions = {}): Service {
 				},
 				readFile: cachedReadFile,
 				readDirectory: ts.sys.readDirectory,
-				getDirectories: cachedLookup(debugFn('getDirectories', ts.sys.getDirectories)),
+				getDirectories: cachedLookup(
+					debugFn('getDirectories', ts.sys.getDirectories)
+				),
 				fileExists: cachedLookup(debugFn('fileExists', fileExists)),
-				directoryExists: cachedLookup(debugFn('directoryExists', ts.sys.directoryExists)),
-				realpath: ts.sys.realpath ? cachedLookup(debugFn('realpath', ts.sys.realpath)) : undefined,
+				directoryExists: cachedLookup(
+					debugFn('directoryExists', ts.sys.directoryExists)
+				),
+				realpath: ts.sys.realpath
+					? cachedLookup(debugFn('realpath', ts.sys.realpath))
+					: undefined,
 				getNewLine: () => ts.sys.newLine,
 				useCaseSensitiveFileNames: () => ts.sys.useCaseSensitiveFileNames,
 				getCurrentDirectory: () => cwd,
@@ -813,13 +888,19 @@ export function create(rawOptions: CreateOptions = {}): Service {
 			serviceHost.getResolvedModuleWithFailedLookupLocationsFromCache = getResolvedModuleWithFailedLookupLocationsFromCache;
 			serviceHost.resolveTypeReferenceDirectives = resolveTypeReferenceDirectives;
 
-			const registry = ts.createDocumentRegistry(ts.sys.useCaseSensitiveFileNames, cwd);
+			const registry = ts.createDocumentRegistry(
+				ts.sys.useCaseSensitiveFileNames,
+				cwd
+			);
 			const service = ts.createLanguageService(serviceHost, registry);
 
 			const updateMemoryCache = (contents: string, fileName: string) => {
 				// Add to `rootFiles` as necessary, either to make TS include a file it has not seen,
 				// or to trigger a re-classification of files from external to internal.
-				if (!rootFileNames.has(fileName) && !isFileKnownToBeInternal(fileName)) {
+				if (
+					!rootFileNames.has(fileName) &&
+					!isFileKnownToBeInternal(fileName)
+				) {
 					markBucketOfFilenameInternal(fileName);
 					rootFileNames.add(fileName);
 					// Increment project version for every change to rootFileNames.
@@ -844,24 +925,31 @@ export function create(rawOptions: CreateOptions = {}): Service {
 
 				const programBefore = service.getProgram();
 				if (programBefore !== previousProgram) {
-					debug(`compiler rebuilt Program instance when getting output for ${fileName}`);
+					debug(
+						`compiler rebuilt Program instance when getting output for ${fileName}`
+					);
 				}
 
 				const output = service.getEmitOutput(fileName);
 
 				// Get the relevant diagnostics - this is 3x faster than `getPreEmitDiagnostics`.
-				const diagnostics = service.getSemanticDiagnostics(fileName).concat(service.getSyntacticDiagnostics(fileName));
+				const diagnostics = service
+					.getSemanticDiagnostics(fileName)
+					.concat(service.getSyntacticDiagnostics(fileName));
 
 				const programAfter = service.getProgram();
 
 				debug(
 					'invariant: Is service.getProject() identical before and after getting emit output and diagnostics? (should always be true) ',
-					programBefore === programAfter,
+					programBefore === programAfter
 				);
 
 				previousProgram = programAfter;
 
-				const diagnosticList = filterDiagnostics(diagnostics, ignoreDiagnostics);
+				const diagnosticList = filterDiagnostics(
+					diagnostics,
+					ignoreDiagnostics
+				);
 				if (diagnosticList.length) reportTSError(diagnosticList);
 
 				if (output.emitSkipped) {
@@ -874,7 +962,7 @@ export function create(rawOptions: CreateOptions = {}): Service {
 						`Unable to require file: ${relative(cwd, fileName)}\n` +
 							'This is usually the result of a faulty configuration or import. ' +
 							'Make sure there is a `.js`, `.json` or other executable extension with ' +
-							'loader attached before `ts-node` available.',
+							'loader attached before `ts-node` available.'
 					);
 				}
 
@@ -902,11 +990,17 @@ export function create(rawOptions: CreateOptions = {}): Service {
 					return contents;
 				},
 				readDirectory: ts.sys.readDirectory,
-				getDirectories: cachedLookup(debugFn('getDirectories', ts.sys.getDirectories)),
+				getDirectories: cachedLookup(
+					debugFn('getDirectories', ts.sys.getDirectories)
+				),
 				fileExists: cachedLookup(debugFn('fileExists', fileExists)),
-				directoryExists: cachedLookup(debugFn('directoryExists', ts.sys.directoryExists)),
+				directoryExists: cachedLookup(
+					debugFn('directoryExists', ts.sys.directoryExists)
+				),
 				resolvePath: cachedLookup(debugFn('resolvePath', ts.sys.resolvePath)),
-				realpath: ts.sys.realpath ? cachedLookup(debugFn('realpath', ts.sys.realpath)) : undefined,
+				realpath: ts.sys.realpath
+					? cachedLookup(debugFn('realpath', ts.sys.realpath))
+					: undefined,
 			};
 
 			const host: _ts.CompilerHost = ts.createIncrementalCompilerHost
@@ -920,7 +1014,12 @@ export function create(rawOptions: CreateOptions = {}): Service {
 						},
 						getDefaultLibLocation: () => normalizeSlashes(dirname(compiler)),
 						getDefaultLibFileName: () =>
-							normalizeSlashes(join(dirname(compiler), ts.getDefaultLibFileName(config.options))),
+							normalizeSlashes(
+								join(
+									dirname(compiler),
+									ts.getDefaultLibFileName(config.options)
+								)
+							),
 						useCaseSensitiveFileNames: () => sys.useCaseSensitiveFileNames,
 				  };
 			const {
@@ -947,12 +1046,14 @@ export function create(rawOptions: CreateOptions = {}): Service {
 						host,
 						undefined,
 						config.errors,
-						config.projectReferences,
+						config.projectReferences
 				  );
 
 			// Read and cache custom transformers.
 			const customTransformers =
-				typeof transformers === 'function' ? transformers(builderProgram.getProgram()) : transformers;
+				typeof transformers === 'function'
+					? transformers(builderProgram.getProgram())
+					: transformers;
 
 			// Set the file contents into cache manually.
 			const updateMemoryCache = (contents: string, fileName: string) => {
@@ -964,7 +1065,10 @@ export function create(rawOptions: CreateOptions = {}): Service {
 
 				// Add to `rootFiles` when discovered by compiler for the first time.
 				let addedToRootFileNames = false;
-				if (!rootFileNames.has(fileName) && !isFileKnownToBeInternal(fileName)) {
+				if (
+					!rootFileNames.has(fileName) &&
+					!isFileKnownToBeInternal(fileName)
+				) {
 					markBucketOfFilenameInternal(fileName);
 					rootFileNames.add(fileName);
 					addedToRootFileNames = true;
@@ -978,7 +1082,7 @@ export function create(rawOptions: CreateOptions = {}): Service {
 						host,
 						builderProgram,
 						config.errors,
-						config.projectReferences,
+						config.projectReferences
 					);
 				}
 			};
@@ -989,11 +1093,15 @@ export function create(rawOptions: CreateOptions = {}): Service {
 				updateMemoryCache(code, fileName);
 
 				const sourceFile = builderProgram.getSourceFile(fileName);
-				if (!sourceFile) throw new TypeError(`Unable to read file: ${fileName}`);
+				if (!sourceFile)
+					throw new TypeError(`Unable to read file: ${fileName}`);
 
 				const program = builderProgram.getProgram();
 				const diagnostics = ts.getPreEmitDiagnostics(program, sourceFile);
-				const diagnosticList = filterDiagnostics(diagnostics, ignoreDiagnostics);
+				const diagnosticList = filterDiagnostics(
+					diagnostics,
+					ignoreDiagnostics
+				);
 				if (diagnosticList.length) reportTSError(diagnosticList);
 
 				const result = builderProgram.emit(
@@ -1009,7 +1117,7 @@ export function create(rawOptions: CreateOptions = {}): Service {
 					},
 					undefined,
 					undefined,
-					customTransformers,
+					customTransformers
 				);
 
 				if (result.emitSkipped) {
@@ -1019,14 +1127,19 @@ export function create(rawOptions: CreateOptions = {}): Service {
 				// Throw an error when requiring files that cannot be compiled.
 				if (output[0] === '') {
 					if (program.isSourceFileFromExternalLibrary(sourceFile)) {
-						throw new TypeError(`Unable to compile file from external library: ${relative(cwd, fileName)}`);
+						throw new TypeError(
+							`Unable to compile file from external library: ${relative(
+								cwd,
+								fileName
+							)}`
+						);
 					}
 
 					throw new TypeError(
 						`Unable to require file: ${relative(cwd, fileName)}\n` +
 							'This is usually the result of a faulty configuration or import. ' +
 							'Make sure there is a `.js`, `.json` or other executable extension with ' +
-							'loader attached before `ts-node` available.',
+							'loader attached before `ts-node` available.'
 					);
 				}
 
@@ -1037,7 +1150,8 @@ export function create(rawOptions: CreateOptions = {}): Service {
 				updateMemoryCache(code, fileName);
 
 				const sourceFile = builderProgram.getSourceFile(fileName);
-				if (!sourceFile) throw new TypeError(`Unable to read file: ${fileName}`);
+				if (!sourceFile)
+					throw new TypeError(`Unable to read file: ${fileName}`);
 
 				const node = getTokenAtPosition(ts, sourceFile, position);
 				const checker = builderProgram.getProgram().getTypeChecker();
@@ -1046,13 +1160,18 @@ export function create(rawOptions: CreateOptions = {}): Service {
 				if (!symbol) return { name: '', comment: '' };
 
 				const type = checker.getTypeOfSymbolAtLocation(symbol, node);
-				const signatures = [...type.getConstructSignatures(), ...type.getCallSignatures()];
+				const signatures = [
+					...type.getConstructSignatures(),
+					...type.getCallSignatures(),
+				];
 
 				return {
 					name: signatures.length
 						? signatures.map((x) => checker.signatureToString(x)).join('\n')
 						: checker.typeToString(type),
-					comment: ts.displayPartsToString(symbol ? symbol.getDocumentationComment(checker) : []),
+					comment: ts.displayPartsToString(
+						symbol ? symbol.getDocumentationComment(checker) : []
+					),
 				};
 			};
 
@@ -1066,7 +1185,9 @@ export function create(rawOptions: CreateOptions = {}): Service {
 		}
 	} else {
 		if (typeof transformers === 'function') {
-			throw new TypeError('Transformers function is unavailable in "--transpile-only"');
+			throw new TypeError(
+				'Transformers function is unavailable in "--transpile-only"'
+			);
 		}
 
 		getOutput = (code: string, fileName: string): SourceOutput => {
@@ -1077,14 +1198,19 @@ export function create(rawOptions: CreateOptions = {}): Service {
 				transformers: transformers,
 			});
 
-			const diagnosticList = filterDiagnostics(result.diagnostics || [], ignoreDiagnostics);
+			const diagnosticList = filterDiagnostics(
+				result.diagnostics || [],
+				ignoreDiagnostics
+			);
 			if (diagnosticList.length) reportTSError(diagnosticList);
 
 			return [result.outputText, result.sourceMapText as string];
 		};
 
 		getTypeInfo = () => {
-			throw new TypeError('Type information is unavailable in "--transpile-only"');
+			throw new TypeError(
+				'Type information is unavailable in "--transpile-only"'
+			);
 		};
 	}
 
@@ -1092,18 +1218,27 @@ export function create(rawOptions: CreateOptions = {}): Service {
 	function compile(code: string, fileName: string, lineOffset = 0) {
 		const normalizedFileName = normalizeSlashes(fileName);
 		const [value, sourceMap] = getOutput(code, normalizedFileName);
-		const output = updateOutput(value, normalizedFileName, sourceMap, getExtension);
+		const output = updateOutput(
+			value,
+			normalizedFileName,
+			sourceMap,
+			getExtension
+		);
 		outputCache.set(normalizedFileName, { content: output });
 		return output;
 	}
 
 	let active = true;
-	const enabled = (enabled?: boolean) => (enabled === undefined ? active : (active = !!enabled));
+	const enabled = (enabled?: boolean) =>
+		enabled === undefined ? active : (active = !!enabled);
 	const extensions = getExtensions(config);
 	const ignored = (fileName: string) => {
 		if (!active) return true;
 		const ext = extname(fileName);
-		if (extensions.tsExtensions.includes(ext) || extensions.jsExtensions.includes(ext)) {
+		if (
+			extensions.tsExtensions.includes(ext) ||
+			extensions.jsExtensions.includes(ext)
+		) {
 			return !isScoped(fileName) || shouldIgnore(fileName);
 		}
 		return true;
@@ -1142,7 +1277,7 @@ function registerExtensions(
 	preferTsExts: boolean | null | undefined,
 	extensions: string[],
 	service: Service,
-	originalJsHandler: (m: NodeModule, filename: string) => any,
+	originalJsHandler: (m: NodeModule, filename: string) => any
 ) {
 	// Register new extensions.
 	for (const ext of extensions) {
@@ -1151,7 +1286,10 @@ function registerExtensions(
 
 	if (preferTsExts) {
 		// tslint:disable-next-line:deprecation
-		const preferredExtensions = new Set([...extensions, ...Object.keys(require.extensions)]);
+		const preferredExtensions = new Set([
+			...extensions,
+			...Object.keys(require.extensions),
+		]);
 
 		for (const ext of preferredExtensions) reorderRequireExtension(ext);
 	}
@@ -1160,7 +1298,11 @@ function registerExtensions(
 /**
  * Register the extension for node.
  */
-function registerExtension(ext: string, service: Service, originalHandler: (m: NodeModule, filename: string) => any) {
+function registerExtension(
+	ext: string,
+	service: Service,
+	originalHandler: (m: NodeModule, filename: string) => any
+) {
 	const old = require.extensions[ext] || originalHandler; // tslint:disable-line
 
 	require.extensions[ext] = function (m: any, filename) {
@@ -1215,7 +1357,7 @@ function fixConfig(ts: TSCommon, config: _ts.ParsedCommandLine) {
 function readConfig(
 	cwd: string,
 	ts: TSCommon,
-	rawOptions: CreateOptions,
+	rawOptions: CreateOptions
 ): {
 	// Path of tsconfig file
 	configFilePath: string | undefined;
@@ -1238,7 +1380,9 @@ function readConfig(
 
 	// Read project configuration when available.
 	if (!skipProject) {
-		configFilePath = project ? resolve(cwd, project) : ts.findConfigFile(projectSearchDir, fileExists);
+		configFilePath = project
+			? resolve(cwd, project)
+			: ts.findConfigFile(projectSearchDir, fileExists);
 
 		if (configFilePath) {
 			const result = ts.readConfigFile(configFilePath, readFile);
@@ -1258,7 +1402,10 @@ function readConfig(
 	}
 
 	// Fix ts-node options that come from tsconfig.json
-	const tsconfigOptions: TsConfigOptions = Object.assign({}, filterRecognizedTsConfigTsNodeOptions(config['ts-node']));
+	const tsconfigOptions: TsConfigOptions = Object.assign(
+		{},
+		filterRecognizedTsConfigTsNodeOptions(config['ts-node'])
+	);
 
 	// Remove resolution of "files".
 	const files = rawOptions.files ?? tsconfigOptions.files ?? DEFAULTS.files;
@@ -1274,7 +1421,7 @@ function readConfig(
 		DEFAULTS.compilerOptions,
 		tsconfigOptions.compilerOptions,
 		rawOptions.compilerOptions,
-		TS_NODE_COMPILER_OPTIONS,
+		TS_NODE_COMPILER_OPTIONS
 	);
 
 	const fixedConfig = fixConfig(
@@ -1289,8 +1436,8 @@ function readConfig(
 			},
 			basePath,
 			undefined,
-			configFilePath,
-		),
+			configFilePath
+		)
 	);
 
 	if (tsconfigOptions.require) {
@@ -1308,7 +1455,9 @@ function readConfig(
  * Given the raw "ts-node" sub-object from a tsconfig, return an object with only the properties
  * recognized by "ts-node"
  */
-function filterRecognizedTsConfigTsNodeOptions(jsonObject: any): TsConfigOptions {
+function filterRecognizedTsConfigTsNodeOptions(
+	jsonObject: any
+): TsConfigOptions {
 	if (jsonObject == null) return jsonObject;
 	const {
 		compiler,
@@ -1360,12 +1509,16 @@ function updateOutput(
 	outputText: string,
 	fileName: string,
 	sourceMap: string,
-	getExtension: (fileName: string) => string,
+	getExtension: (fileName: string) => string
 ) {
-	const base64Map = Buffer.from(updateSourceMap(sourceMap, fileName), 'utf8').toString('base64');
+	const base64Map = Buffer.from(
+		updateSourceMap(sourceMap, fileName),
+		'utf8'
+	).toString('base64');
 	const sourceMapContent = `data:application/json;charset=utf-8;base64,${base64Map}`;
 	const sourceMapLength =
-		`${basename(fileName)}.map`.length + (getExtension(fileName).length - extname(fileName).length);
+		`${basename(fileName)}.map`.length +
+		(getExtension(fileName).length - extname(fileName).length);
 
 	return outputText.slice(0, -sourceMapLength) + sourceMapContent;
 }
@@ -1384,7 +1537,10 @@ function updateSourceMap(sourceMapText: string, fileName: string) {
 /**
  * Filter diagnostics.
  */
-function filterDiagnostics(diagnostics: readonly _ts.Diagnostic[], ignore: number[]) {
+function filterDiagnostics(
+	diagnostics: readonly _ts.Diagnostic[],
+	ignore: number[]
+) {
 	return diagnostics.filter((x) => ignore.indexOf(x.code) === -1);
 }
 
@@ -1393,7 +1549,11 @@ function filterDiagnostics(diagnostics: readonly _ts.Diagnostic[], ignore: numbe
  *
  * Reference: https://github.com/microsoft/TypeScript/blob/fcd9334f57d85b73dd66ad2d21c02e84822f4841/src/services/utilities.ts#L705-L731
  */
-function getTokenAtPosition(ts: typeof _ts, sourceFile: _ts.SourceFile, position: number): _ts.Node {
+function getTokenAtPosition(
+	ts: typeof _ts,
+	sourceFile: _ts.SourceFile,
+	position: number
+): _ts.Node {
 	let current: _ts.Node = sourceFile;
 
 	outer: while (true) {

@@ -4,4 +4,8 @@ const require = createRequire(fileURLToPath(import.meta.url));
 
 /** @type {import('../dist/esm')} */
 const esm = require('../dist/esm');
-export const { resolve, getFormat, transformSource } = esm.registerAndCreateEsmHooks({ transpileOnly: true });
+export const {
+	resolve,
+	getFormat,
+	transformSource,
+} = esm.registerAndCreateEsmHooks({ transpileOnly: true });

@@ -26,14 +26,19 @@ async function main() {
 				properties: {
 					'ts-node': {
 						...typescriptNodeSchema.definitions.TsConfigOptions,
-						description: typescriptNodeSchema.definitions.TsConfigSchema.properties['ts-node'].description,
+						description:
+							typescriptNodeSchema.definitions.TsConfigSchema.properties[
+								'ts-node'
+							].description,
 						properties: {
 							...typescriptNodeSchema.definitions.TsConfigOptions.properties,
 							compilerOptions: {
-								...typescriptNodeSchema.definitions.TsConfigOptions.properties.compilerOptions,
+								...typescriptNodeSchema.definitions.TsConfigOptions.properties
+									.compilerOptions,
 								allOf: [
 									{
-										$ref: '#/definitions/compilerOptionsDefinition/properties/compilerOptions',
+										$ref:
+											'#/definitions/compilerOptionsDefinition/properties/compilerOptions',
 									},
 								],
 							},
@@ -50,13 +55,19 @@ async function main() {
 			...schemastoreSchema.allOf.slice(4),
 		],
 	};
-	writeFileSync(resolve(__dirname, '../tsconfig.schemastore-schema.json'), JSON.stringify(mergedSchema, null, 2));
+	writeFileSync(
+		resolve(__dirname, '../tsconfig.schemastore-schema.json'),
+		JSON.stringify(mergedSchema, null, 2)
+	);
 }
 
 export async function getSchemastoreSchema() {
 	const {
 		data: schemastoreSchema,
-	} = await axios.get('https://schemastore.azurewebsites.net/schemas/json/tsconfig.json', { responseType: 'json' });
+	} = await axios.get(
+		'https://schemastore.azurewebsites.net/schemas/json/tsconfig.json',
+		{ responseType: 'json' }
+	);
 	return schemastoreSchema;
 }
 

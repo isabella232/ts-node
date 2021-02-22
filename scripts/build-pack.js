@@ -2,7 +2,14 @@
 // Would otherwise be written as inline bash in package.json script
 
 const { exec } = require('child_process');
-const { mkdtempSync, writeFileSync, readFileSync, unlinkSync, rmdirSync, readdirSync } = require('fs');
+const {
+	mkdtempSync,
+	writeFileSync,
+	readFileSync,
+	unlinkSync,
+	rmdirSync,
+	readdirSync,
+} = require('fs');
 const { join } = require('path');
 
 const testDir = join(__dirname, '../tests');

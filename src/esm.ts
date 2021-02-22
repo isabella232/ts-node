@@ -1,8 +1,16 @@
 import { register, getExtensions, RegisterOptions } from './index';
-import { parse as parseUrl, format as formatUrl, UrlWithStringQuery, fileURLToPath, pathToFileURL } from 'url';
+import {
+	parse as parseUrl,
+	format as formatUrl,
+	UrlWithStringQuery,
+	fileURLToPath,
+	pathToFileURL,
+} from 'url';
 import { extname } from 'path';
 import * as assert from 'assert';
-const { createResolve } = require('../dist-raw/node-esm-resolve-implementation');
+const {
+	createResolve,
+} = require('../dist-raw/node-esm-resolve-implementation');
 
 // Note: On Windows, URLs look like this: file:///D:/dev/@TypeStrong/ts-node-examples/foo.ts
 
@@ -30,7 +38,7 @@ export function registerAndCreateEsmHooks(opts?: RegisterOptions) {
 	async function resolve(
 		specifier: string,
 		context: { parentURL: string },
-		defaultResolve: typeof resolve,
+		defaultResolve: typeof resolve
 	): Promise<{ url: string }> {
 		const defer = async () => {
 			const r = await defaultResolve(specifier, context, defaultResolve);
@@ -56,12 +64,21 @@ export function registerAndCreateEsmHooks(opts?: RegisterOptions) {
 
 		// pathname is the path to be resolved
 
-		return nodeResolveImplementation.defaultResolve(specifier, context, defaultResolve);
+		return nodeResolveImplementation.defaultResolve(
+			specifier,
+			context,
+			defaultResolve
+		);
 	}
 
 	type Format = 'builtin' | 'commonjs' | 'dynamic' | 'json' | 'module' | 'wasm';
-	async function getFormat(url: string, context: {}, defaultGetFormat: typeof getFormat): Promise<{ format: Format }> {
-		const defer = (overrideUrl: string = url) => defaultGetFormat(overrideUrl, context, defaultGetFormat);
+	async function getFormat(
+		url: string,
+		context: {},
+		defaultGetFormat: typeof getFormat
+	): Promise<{ format: Format }> {
+		const defer = (overrideUrl: string = url) =>
+			defaultGetFormat(overrideUrl, context, defaultGetFormat);
 
 		const parsed = parseUrl(url);
 
@@ -70,7 +87,10 @@ export function registerAndCreateEsmHooks(opts?: RegisterOptions) {
 		}
 
 		const { pathname } = parsed;
-		assert(pathname !== null, 'ESM getFormat() hook: URL should never have null pathname');
+		assert(
+			pathname !== null,
+			'ESM getFormat() hook: URL should never have null pathname'
+		);
 
 		const nativePath = fileURLToPath(url);
 
@@ -86,11 +106,13 @@ export function registerAndCreateEsmHooks(opts?: RegisterOptions) {
 	async function transformSource(
 		source: string | Buffer,
 		context: { url: string; format: Format },
-		defaultTransformSource: typeof transformSource,
+		defaultTransformSource: typeof transformSource
 	): Promise<{ source: string | Buffer }> {
-		const defer = () => defaultTransformSource(source, context, defaultTransformSource);
+		const defer = () =>
+			defaultTransformSource(source, context, defaultTransformSource);
 
-		const sourceAsString = typeof source === 'string' ? source : source.toString('utf8');
+		const sourceAsString =
+			typeof source === 'string' ? source : source.toString('utf8');
 
 		const { url } = context;
 		const parsed = parseUrl(url);

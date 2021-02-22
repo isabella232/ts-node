@@ -24,7 +24,12 @@ export interface ReplService {
 	/**
 	 * `eval` implementation compatible with node's REPL API
 	 */
-	nodeEval(code: string, _context: any, _filename: string, callback: (err: Error | null, result?: any) => any): void;
+	nodeEval(
+		code: string,
+		_context: any,
+		_filename: string,
+		callback: (err: Error | null, result?: any) => any
+	): void;
 	evalAwarePartialHost: EvalAwarePartialHost;
 	/** Start a node REPL */
 	start(code?: string): void;
@@ -48,12 +53,16 @@ export interface CreateReplOptions {
 
 export function createRepl(options: CreateReplOptions = {}) {
 	let service = options.service;
-	const state = options.state ?? new EvalState(join(process.cwd(), EVAL_FILENAME));
+	const state =
+		options.state ?? new EvalState(join(process.cwd(), EVAL_FILENAME));
 	const evalAwarePartialHost = createEvalAwarePartialHost(state);
 	const stdin = options.stdin ?? process.stdin;
 	const stdout = options.stdout ?? process.stdout;
 	const stderr = options.stderr ?? process.stderr;
-	const _console = stdout === process.stdout && stderr === process.stderr ? console : new Console(stdout, stderr);
+	const _console =
+		stdout === process.stdout && stderr === process.stderr
+			? console
+			: new Console(stdout, stderr);
 
 	const replService: ReplService = {
 		state: options.state ?? new EvalState(join(process.cwd(), EVAL_FILENAME)),
@@ -81,7 +90,7 @@ export function createRepl(options: CreateReplOptions = {}) {
 		code: string,
 		_context: any,
 		_filename: string,
-		callback: (err: Error | null, result?: any) => any,
+		callback: (err: Error | null, result?: any) => any
 	) {
 		let err: Error | null = null;
 		let result: any;
@@ -139,9 +148,14 @@ export class EvalState {
  * Filesystem host functions which are aware of the "virtual" [eval].ts file used to compile REPL inputs.
  * Must be passed to `create()` to create a ts-node compiler service which can compile REPL inputs.
  */
-export type EvalAwarePartialHost = Pick<CreateOptions, 'readFile' | 'fileExists'>;
+export type EvalAwarePartialHost = Pick<
+	CreateOptions,
+	'readFile' | 'fileExists'
+>;
 
-export function createEvalAwarePartialHost(state: EvalState): EvalAwarePartialHost {
+export function createEvalAwarePartialHost(
+	state: EvalState
+): EvalAwarePartialHost {
 	function readFile(path: string) {
 		if (path === state.path) return state.input;
 
@@ -206,7 +220,12 @@ function exec(code: string, filename: string) {
 /**
  * Start a CLI REPL.
  */
-function startRepl(replService: ReplService, service: Service, state: EvalState, code?: string) {
+function startRepl(
+	replService: ReplService,
+	service: Service,
+	state: EvalState,
+	code?: string
+) {
 	// Eval incoming code before the REPL starts.
 	if (code) {
 		try {
@@ -222,7 +241,9 @@ function startRepl(replService: ReplService, service: Service, state: EvalState,
 		input: replService.stdin,
 		output: replService.stdout,
 		// Mimicking node's REPL implementation: https://github.com/nodejs/node/blob/168b22ba073ee1cbf8d0bcb4ded7ff3099335d04/lib/internal/repl.js#L28-L30
-		terminal: (replService.stdout as tty.WriteStream).isTTY && !parseInt(env.NODE_NO_READLINE!, 10),
+		terminal:
+			(replService.stdout as tty.WriteStream).isTTY &&
+			!parseInt(env.NODE_NO_READLINE!, 10),
 		eval: replService.nodeEval,
 		useGlobal: true,
 	});
@@ -249,7 +270,11 @@ function startRepl(replService: ReplService, service: Service, state: EvalState,
 			}
 
 			const undo = appendEval(state, identifier);
-			const { name, comment } = service.getTypeInfo(state.input, state.path, state.input.length);
+			const { name, comment } = service.getTypeInfo(
+				state.input,
+				state.path,
+				state.input.length
+			);
 
 			undo();
 
@@ -261,7 +286,8 @@ function startRepl(replService: ReplService, service: Service, state: EvalState,
 
 	// Set up REPL history when available natively via node.js >= 11.
 	if (repl.setupHistory) {
-		const historyPath = env.TS_NODE_HISTORY || join(homedir(), '.ts_node_repl_history');
+		const historyPath =
+			env.TS_NODE_HISTORY || join(homedir(), '.ts_node_repl_history');
 
 		repl.setupHistory(historyPath, (err) => {
 			if (!err) return;
@@ -282,7 +308,11 @@ function appendEval(state: EvalState, input: string) {
 	const undoLines = state.lines;
 
 	// Handle ASI issues with TypeScript re-evaluation.
-	if (undoInput.charAt(undoInput.length - 1) === '\n' && /^\s*[\/\[(`-]/.test(input) && !/;\s*$/.test(undoInput)) {
+	if (
+		undoInput.charAt(undoInput.length - 1) === '\n' &&
+		/^\s*[\/\[(`-]/.test(input) &&
+		!/;\s*$/.test(undoInput)
+	) {
 		state.input = `${state.input.slice(0, -1)};\n`;
 	}
 
