@@ -364,9 +364,9 @@ export interface TypeInfo {
  * variables.
  */
 export const DEFAULTS: RegisterOptions = {
-	cwd: env.TS_NODE_CWD ?? env.TS_NODE_DIR, // tslint:disable-line:deprecation
+	cwd: env.TS_NODE_CWD ?? env.TS_NODE_DIR,
 	emit: yn(env.TS_NODE_EMIT),
-	scope: yn(env.TS_NODE_SCOPE), // tslint:disable-line:deprecation
+	scope: yn(env.TS_NODE_SCOPE),
 	files: yn(env.TS_NODE_FILES),
 	pretty: yn(env.TS_NODE_PRETTY),
 	compiler: env.TS_NODE_COMPILER,
@@ -489,7 +489,7 @@ export function getExtensions(config: _ts.ParsedCommandLine) {
  * Register TypeScript compiler instance onto node.js
  */
 export function register(opts: RegisterOptions = {}): Service {
-	const originalJsHandler = require.extensions['.js']; // tslint:disable-line
+	const originalJsHandler = require.extensions['.js'];
 	const service = create(opts);
 	const { tsExtensions, jsExtensions } = getExtensions(service.config);
 	const extensions = [...tsExtensions, ...jsExtensions];
@@ -517,7 +517,7 @@ export function register(opts: RegisterOptions = {}): Service {
 export function create(rawOptions: CreateOptions = {}): Service {
 	const cwd = resolve(
 		rawOptions.cwd ?? rawOptions.dir ?? DEFAULTS.cwd ?? process.cwd()
-	); // tslint:disable-line:deprecation
+	);
 	const compilerName = rawOptions.compiler ?? DEFAULTS.compiler;
 
 	/**
@@ -1265,9 +1265,9 @@ function createIgnore(ignoreBaseDir: string, ignore: RegExp[]) {
  * @param {string} ext
  */
 function reorderRequireExtension(ext: string) {
-	const old = require.extensions[ext]; // tslint:disable-line
-	delete require.extensions[ext]; // tslint:disable-line
-	require.extensions[ext] = old; // tslint:disable-line
+	const old = require.extensions[ext];
+	delete require.extensions[ext];
+	require.extensions[ext] = old;
 }
 
 /**
@@ -1303,10 +1303,9 @@ function registerExtension(
 	service: Service,
 	originalHandler: (m: NodeModule, filename: string) => any
 ) {
-	const old = require.extensions[ext] || originalHandler; // tslint:disable-line
+	const old = require.extensions[ext] || originalHandler;
 
 	require.extensions[ext] = function (m: any, filename) {
-		// tslint:disable-line
 		if (service.ignored(filename)) return old(m, filename);
 
 		if (service.options.experimentalEsmLoader) {

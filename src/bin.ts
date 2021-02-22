@@ -254,16 +254,15 @@ function getProjectSearchDir(
 		const extsTemporarilyInstalled: string[] = [];
 		for (const ext of exts) {
 			if (!hasOwnProperty(require.extensions, ext)) {
-				// tslint:disable-line
 				extsTemporarilyInstalled.push(ext);
-				require.extensions[ext] = function () {}; // tslint:disable-line
+				require.extensions[ext] = function () {};
 			}
 		}
 		try {
 			return dirname(requireResolveNonCached(scriptPath!));
 		} finally {
 			for (const ext of extsTemporarilyInstalled) {
-				delete require.extensions[ext]; // tslint:disable-line
+				delete require.extensions[ext];
 			}
 		}
 	}
